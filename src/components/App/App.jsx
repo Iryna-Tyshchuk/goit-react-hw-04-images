@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -8,8 +8,8 @@ import { Searchbar } from '../Searchbar/Searchbar';
 import { ImageGallery } from '../ImageGallery/ImageGallery';
 import { Button } from 'components/Button/Button';
 import { Modal } from 'components/Modal/Modal';
-import { Text } from 'components/Text/Text';
 import { Loader } from 'components/Loader/Loader';
+
 export function App() {
   const [images, setImages] = useState([]);
   const [totalImages, setTotalImages] = useState(0);
@@ -17,11 +17,51 @@ export function App() {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState('');
-  const [modalData, setmodalData] = useState(null);
   const [largeImageURL, setlargeImageURL] = useState(null);
+  useEffect(() => {
+    if (!query) return;
+    const getImages = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const { images, totalImages } = await requestImages(query, page);
+
+        if (!images.length) {
+          setError('Sorry. There are no images ... 😭');
+          return;
+        }
+        setImages(prevImages => [...prevImages, ...images]);
+
+        setTotalImages(totalImages);
+      } catch (error) {
+        setError('Something went wrong');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getImages();
+  }, [page, query]);
+
+  useEffect(() => {
+    if (error !== null) toast.error(error);
+  }, [error]);
+
+  const getQuery = ({ value }) => {
+    if (!value.trim() || value === query) {
+      setError('Please, change your request');
+      return;
+    }
+
+    setQuery(value);
+    setPage(1);
+    setImages([]);
+    setTotalImages(0);
+  };
 
   const loadMore = () => {
-    setPage(prevState => prevState.page + 1);
+    setPage(prevPage => prevPage + 1);
   };
 
   const getLargeImage = largeImageURL => {
@@ -31,6 +71,7 @@ export function App() {
   const closeModal = () => {
     setlargeImageURL(null);
   };
+
   return (
     <StyledApp>
       <ToastContainer
@@ -39,15 +80,10 @@ export function App() {
         closeOnClick
         theme="colored"
       />
-      <Searchbar onSubmit={this.getQuery} />
+      <Searchbar onSubmit={getQuery} />
       {images.length !== 0 && (
         <ImageGallery images={images} getLargeImage={getLargeImage} />
       )}
-      {!isLoading && images.length === 0 && !error && (
-        <Text textAlign="center">Sorry. There are no images ... 😭</Text>
-      )}
-
-      {error && <Text textAlign="center">{error}</Text>}
 
       {!isLoading && totalImages !== images.length && (
         <Button type="button" onClick={loadMore}>
@@ -64,111 +100,111 @@ export function App() {
   );
 }
 
-export class OldApp extends Component {
-  state = {
-    images: [],
-    totalImages: 0,
-    isLoading: false,
-    error: null,
-    page: 1,
-    query: '',
-    modalData: null,
-    largeImageURL: null,
-  };
+// export class OldApp extends Component {
+//   state = {
+//     images: [],
+//     totalImages: 0,
+//     isLoading: false,
+//     error: null,
+//     page: 1,
+//     query: '',
+//     modalData: null,
+//     largeImageURL: null,
+//   };
 
-  componentDidUpdate(_, prevState) {
-    const { query, page, error } = this.state;
-    if (prevState.query !== query || prevState.page !== page) {
-      this.getImages();
-    }
-    if (prevState.error !== error && error) {
-      toast.error(error);
-    }
-  }
+//   componentDidUpdate(_, prevState) {
+//     const { query, page, error } = this.state;
+//     if (prevState.query !== query || prevState.page !== page) {
+//       this.getImages();
+//     }
+//     if (prevState.error !== error && error) {
+//       toast.error(error);
+//     }
+//   }
 
-  getImages = async () => {
-    const { query, page } = this.state;
-    try {
-      this.setState({ isLoading: true });
+//   getImages = async () => {
+//     const { query, page } = this.state;
+//     try {
+//       this.setState({ isLoading: true });
 
-      const { images, totalImages } = await requestImages(query, page);
+//       const { images, totalImages } = await requestImages(query, page);
 
-      if (!images.length) {
-        this.setState({ error: 'Sorry. There are no images ... 😭' });
-        return;
-      }
-      this.setState(prevState => ({
-        images: [...prevState.images, ...images],
-        error: '',
-        totalImages,
-      }));
-    } catch (error) {
-      this.setState({ error: 'Something went wrong' });
-    } finally {
-      this.setState({ isLoading: false });
-    }
-  };
+//       if (!images.length) {
+//         this.setState({ error: 'Sorry. There are no images ... 😭' });
+//         return;
+//       }
+//       this.setState(prevState => ({
+//         images: [...prevState.images, ...images],
+//         error: '',
+//         totalImages,
+//       }));
+//     } catch (error) {
+//       this.setState({ error: 'Something went wrong' });
+//     } finally {
+//       this.setState({ isLoading: false });
+//     }
+//   };
 
-  getQuery = ({ value }) => {
-    if (!value.trim() || value === this.state.query) {
-      this.setState({ error: 'Please, change your request' });
-      return;
-    }
-    this.setState({
-      query: value,
-      page: 1,
-      images: [],
-      totalImages: 0,
-    });
-  };
+//   getQuery = ({ value }) => {
+//     if (!value.trim() || value === this.state.query) {
+//       this.setState({ error: 'Please, change your request' });
+//       return;
+//     }
+//     this.setState({
+//       query: value,
+//       page: 1,
+//       images: [],
+//       totalImages: 0,
+//     });
+//   };
 
-  loadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
+//   loadMore = () => {
+//     this.setState(prevState => ({
+//       page: prevState.page + 1,
+//     }));
+//   };
 
-  getLargeImage = largeImageURL => {
-    this.setState({ largeImageURL });
-  };
+//   getLargeImage = largeImageURL => {
+//     this.setState({ largeImageURL });
+//   };
 
-  closeModal = () => {
-    this.setState({ largeImageURL: null });
-  };
+//   closeModal = () => {
+//     this.setState({ largeImageURL: null });
+//   };
 
-  render() {
-    const { images, isLoading, error, totalImages, largeImageURL } = this.state;
+//   render() {
+//     const { images, isLoading, error, totalImages, largeImageURL } = this.state;
 
-    return (
-      <StyledApp>
-        <ToastContainer
-          position="top-right"
-          autoClose={5000}
-          closeOnClick
-          theme="colored"
-        />
-        <Searchbar onSubmit={this.getQuery} />
-        {images.length !== 0 && (
-          <ImageGallery images={images} getLargeImage={this.getLargeImage} />
-        )}
-        {!isLoading && images.length === 0 && !error && (
-          <Text textAlign="center">Sorry. There are no images ... 😭</Text>
-        )}
+//     return (
+//       <StyledApp>
+//         <ToastContainer
+//           position="top-right"
+//           autoClose={5000}
+//           closeOnClick
+//           theme="colored"
+//         />
+//         <Searchbar onSubmit={this.getQuery} />
+//         {images.length !== 0 && (
+//           <ImageGallery images={images} getLargeImage={this.getLargeImage} />
+//         )}
+//         {!isLoading && images.length === 0 && !error && (
+//           <Text textAlign="center">Sorry. There are no images ... 😭</Text>
+//         )}
 
-        {error && <Text textAlign="center">{error}</Text>}
+//         {error && <Text textAlign="center">{error}</Text>}
 
-        {!isLoading && totalImages !== images.length && (
-          <Button type="button" onClick={this.loadMore}>
-            Load more
-          </Button>
-        )}
+//         {!isLoading && totalImages !== images.length && (
+//           <Button type="button" onClick={this.loadMore}>
+//             Load more
+//           </Button>
+//         )}
 
-        {isLoading && <Loader />}
+//         {isLoading && <Loader />}
 
-        {largeImageURL && (
-          <Modal largeImageURL={largeImageURL} closeModal={this.closeModal} />
-        )}
-      </StyledApp>
-    );
-  }
-}
+//         {largeImageURL && (
+//           <Modal largeImageURL={largeImageURL} closeModal={this.closeModal} />
+//         )}
+//       </StyledApp>
+//     );
+//   }
+// }
