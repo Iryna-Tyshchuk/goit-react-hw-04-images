@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -10,8 +10,61 @@ import { Button } from 'components/Button/Button';
 import { Modal } from 'components/Modal/Modal';
 import { Text } from 'components/Text/Text';
 import { Loader } from 'components/Loader/Loader';
+export function App() {
+  const [images, setImages] = useState([]);
+  const [totalImages, setTotalImages] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [modalData, setmodalData] = useState(null);
+  const [largeImageURL, setlargeImageURL] = useState(null);
 
-export class App extends Component {
+  const loadMore = () => {
+    setPage(prevState => prevState.page + 1);
+  };
+
+  const getLargeImage = largeImageURL => {
+    setlargeImageURL(largeImageURL);
+  };
+
+  const closeModal = () => {
+    setlargeImageURL(null);
+  };
+  return (
+    <StyledApp>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        closeOnClick
+        theme="colored"
+      />
+      <Searchbar onSubmit={this.getQuery} />
+      {images.length !== 0 && (
+        <ImageGallery images={images} getLargeImage={getLargeImage} />
+      )}
+      {!isLoading && images.length === 0 && !error && (
+        <Text textAlign="center">Sorry. There are no images ... 😭</Text>
+      )}
+
+      {error && <Text textAlign="center">{error}</Text>}
+
+      {!isLoading && totalImages !== images.length && (
+        <Button type="button" onClick={loadMore}>
+          Load more
+        </Button>
+      )}
+
+      {isLoading && <Loader />}
+
+      {largeImageURL && (
+        <Modal largeImageURL={largeImageURL} closeModal={closeModal} />
+      )}
+    </StyledApp>
+  );
+}
+
+export class OldApp extends Component {
   state = {
     images: [],
     totalImages: 0,
