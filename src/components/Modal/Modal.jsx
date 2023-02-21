@@ -10,7 +10,7 @@ export function Modal({ largeImageURL, closeModal }) {
     };
 
     window.addEventListener('keydown', onEscClose);
-    return window.removeEventListener('keydown', onEscClose);
+    return () => window.removeEventListener('keydown', onEscClose);
   }, [closeModal]);
 
   const closeImage = e => {
